@@ -3,6 +3,7 @@ import supervision as sv
 import pickle
 import cv2
 import os
+import numpy as np
 import sys
 sys.path.append('../')
 from utils import get_center_of_bbox, get_bbox_width
@@ -131,6 +132,22 @@ class Tracker:
             )   
     
         return frame
+
+
+    def draw_traingle(self,frame,bbox,color):
+        y= int(bbox[1])
+        x,_ = get_center_of_bbox(bbox)
+
+        triangle_points = np.array([
+            [x,y],
+            [x-10,y-20],
+            [x+10,y-20],
+        ])
+        cv2.drawContours(frame, [triangle_points],0,color, cv2.FILLED)
+        cv2.drawContours(frame, [triangle_points],0,(0,0,0), 2)
+
+        return frame
+
     
     def draw_annotaations (self, video_frames, tracks):
         output_video_frames = []
@@ -143,11 +160,17 @@ class Tracker:
             
              # Draw players
              for track_id , player in player_dict.items():
-                 frame = self.draw_ellipes(frame, player["bbox"], (0,0,255), track_id)
+                 color = player.get("team_color",(0,0,255))
+                 frame = self.draw_ellipes(frame, player["bbox"], color, track_id)
              
              # Draw referees
-             for _ , referee in referee_dict.items():
-                 frame = self.draw_ellipes(frame, referee["bbox"], (0,255,255), track_id)
+             for _, referee in referee_dict.items():
+                 frame = self.draw_ellipes(frame, referee["bbox"], (0,0,0))
+
+             # Draw ball 
+             for track_id, ball in ball_dict.items():
+                frame = self.draw_traingle(frame, ball["bbox"],(0,255,0))
+
 
              output_video_frames.append(frame)
 
